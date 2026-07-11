@@ -1,0 +1,17 @@
+# Override for the GPU/Tailscale host. Apply with:
+#   docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
+#
+# - postgres: no host port (the box already runs postgres on 5432 and other
+#   projects publish 5433/5439/5442/5443); containers use the internal network.
+# - api: bind 0.0.0.0:8100 so the Tailscale IP (100.76.65.1) works from phones.
+
+services:
+  postgres:
+    ports: !reset []
+
+  api:
+    ports: !override
+      - "0.0.0.0:8100:8080"
+    volumes: !override
+      - zameel_data:/data
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8080

@@ -216,3 +216,18 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Xcode / iOS
+ios/Zameel.xcodeproj/
+ios/build/
+*.xcuserstate
+DerivedData/
+
+# macOS
+.DS_Store
+
+# App Store artifacts
+ios/build/
+
+# Personal booking documents — local seed sources only, never pushed
+data/

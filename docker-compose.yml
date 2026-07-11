@@ -1,0 +1,48 @@
+# Local dev: api + postgres in containers, hot-reload via volume mount.
+# `docker compose up` is the whole loop.
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: zameel-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: zameel
+      POSTGRES_USER: zameel
+      POSTGRES_PASSWORD: zameel
+    ports:
+      # Host-side 5434: the GPU host runs its own postgres on 5432 and
+      # reader's container publishes 5433.
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - zameel_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zameel -d zameel"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: zameel-api:dev
+    container_name: zameel-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg2://zameel:zameel@postgres:5432/zameel
+      JWT_SECRET: ${JWT_SECRET:-zameel-dev-secret}
+      DATA_DIR: /data
+    ports:
+      - "127.0.0.1:8100:8080"
+    volumes:
+      - ./backend/app:/app/app
+      - zameel_data:/data
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload
+
+volumes:
+  zameel_pgdata:
+  zameel_data:
